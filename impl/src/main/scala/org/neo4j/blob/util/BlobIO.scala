@@ -1,28 +1,11 @@
-/*
- * Copyright (c) 2002-2019 "Neo4j,"
- * Neo4j Sweden AB [http://neo4j.com]
- *
- * This file is part of Neo4j.
- *
- * Neo4j is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package org.neo4j.blob.utils
+package org.neo4j.blob.util
 
 import java.io.ByteArrayOutputStream
+import java.sql.Blob
 
 import org.neo4j.blob._
-import org.neo4j.blob.utils.StreamUtils._
+import org.neo4j.blob.impl.{BlobFactory, MimeTypeFactory}
+import org.neo4j.blob.util.StreamUtils._
 
 /**
   * Created by bluejoe on 2019/4/18.
@@ -46,8 +29,8 @@ object BlobIO {
 
     val bid = new BlobId(values(2), values(3));
 
-    val mt = MimeType.fromCode(mimeType);
-    Blob.makeEntry(bid, length, mt);
+    val mt = MimeTypeFactory.fromCode(mimeType);
+    BlobFactory.makeEntry(bid, length, mt);
   }
 
   def _pack(entry: BlobEntry, keyId: Int = 0): Array[Long] = {
