@@ -1,8 +1,6 @@
 package org.neo4j.blob.util
 
 import java.io.ByteArrayOutputStream
-import java.sql.Blob
-
 import org.neo4j.blob._
 import org.neo4j.blob.impl.{BlobFactory, MimeTypeFactory}
 import org.neo4j.blob.util.StreamUtils._
