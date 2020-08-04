@@ -4,7 +4,6 @@ import java.io._
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.io.IOUtils
 import org.neo4j.blob.util.StreamUtils
-import org.neo4j.blob.util.StreamUtils._
 
 trait InputStreamSource {
   /**
@@ -41,7 +40,7 @@ trait Blob extends Comparable[Blob] {
   override def toString = s"blob(length=${length},mime-type=${mimeType.text})";
 }
 
-//actually a 4-long values
+//actually a 4-long value
 case class BlobId(value1: Long, value2: Long) {
   val values = Array[Long](value1, value2);
 
@@ -54,21 +53,5 @@ case class BlobId(value1: Long, value2: Long) {
   }
 }
 
-trait BlobWithId extends Blob {
-  def id: BlobId;
-
-  def entry: BlobEntry;
-}
-
-object BlobId {
-  val EMPTY = BlobId(-1L, -1L);
-
-  def fromBytes(bytes: Array[Byte]): BlobId = {
-    val is = new ByteArrayInputStream(bytes);
-    BlobId(is.readLong(), is.readLong());
-  }
-
-  def readFromStream(is: InputStream): BlobId = {
-    fromBytes(is.readBytes(16))
-  }
+trait ManagedBlob extends Blob with BlobEntry {
 }

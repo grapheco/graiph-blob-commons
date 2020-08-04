@@ -2,14 +2,15 @@ package org.neo4j.blob.impl
 
 import java.io._
 import java.net.URL
+
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import org.neo4j.blob.{Blob, BlobEntry, BlobId, BlobWithId, InputStreamSource, MimeType}
+import org.neo4j.blob.{Blob, BlobEntry, BlobId, ManagedBlob, InputStreamSource, MimeType}
 import org.neo4j.blob.util.StreamUtils._
 
 object BlobIdFactory {
-  val EMPTY = BlobId(-1L, -1L);
+  val EMPTY = BlobId(0L, 0L);
 
   def fromBytes(bytes: Array[Byte]): BlobId = {
     val is = new ByteArrayInputStream(bytes);
@@ -22,24 +23,26 @@ object BlobIdFactory {
 }
 
 object BlobFactory {
-  private class BlobImpl(val streamSource: InputStreamSource, val length: Long, val mimeType: MimeType, val oid: Option[BlobId] = None)
-    extends Blob with BlobWithId {
-    def withId(nid: BlobId): BlobWithId = new BlobImpl(streamSource, length, mimeType, Some(nid));
 
-    def id: BlobId = oid.get;
-
-    def entry: BlobEntry = new BlobEntryImpl(id, length, mimeType);
+  private class BlobImpl(val streamSource: InputStreamSource, val length: Long, val mimeType: MimeType)
+    extends Blob {
+    def withId(id: BlobId): ManagedBlob = new ManagedBlobImpl(streamSource, length, mimeType, id);
   }
 
   private class BlobEntryImpl(val id: BlobId, val length: Long, val mimeType: MimeType)
     extends BlobEntry {
   }
 
-  def makeStoredBlob(entry: BlobEntry, streamSource: InputStreamSource): BlobWithId =
-    new BlobImpl(streamSource, entry.length, entry.mimeType, Some(entry.id))
+  private class ManagedBlobImpl(val streamSource: InputStreamSource, override val length: Long, override val mimeType: MimeType, override val id: BlobId)
+    extends BlobEntryImpl(id, length, mimeType) with ManagedBlob {
+  }
 
-  def withId(blob: Blob, id: BlobId): BlobWithId =
-    new BlobImpl(blob.streamSource, blob.length, blob.mimeType, Some(id))
+
+  def makeStoredBlob(entry: BlobEntry, streamSource: InputStreamSource): ManagedBlob =
+    new ManagedBlobImpl(streamSource, entry.length, entry.mimeType, entry.id)
+
+  def withId(blob: Blob, id: BlobId): ManagedBlob =
+    new ManagedBlobImpl(blob.streamSource, blob.length, blob.mimeType, id)
 
   def makeBlob(length: Long, mimeType: MimeType, streamSource: InputStreamSource): Blob =
     new BlobImpl(streamSource, length, mimeType);
@@ -121,10 +124,10 @@ class InlineBlob(bytes: Array[Byte], val length: Long, val mimeType: MimeType)
 
   override val streamSource: InputStreamSource = new InputStreamSource() {
     override def offerStream[T](consume: (InputStream) => T): T = {
-      val fis = new ByteArrayInputStream(bytes);
-      val t = consume(fis);
-      fis.close();
-      t;
+      val fis = new ByteArrayInputStream(bytes)
+      val t = consume(fis)
+      fis.close()
+      t
     }
-  };
+  }
 }
