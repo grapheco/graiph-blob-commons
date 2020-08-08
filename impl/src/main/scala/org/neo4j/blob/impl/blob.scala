@@ -2,11 +2,12 @@ package org.neo4j.blob.impl
 
 import java.io._
 import java.net.URL
+import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import org.neo4j.blob.{Blob, BlobEntry, BlobId, ManagedBlob, InputStreamSource, MimeType}
+import org.neo4j.blob.{Blob, BlobEntry, BlobId, InputStreamSource, ManagedBlob, MimeType}
 import org.neo4j.blob.util.StreamUtils._
 
 object BlobIdFactory {
@@ -23,6 +24,7 @@ object BlobIdFactory {
 }
 
 object BlobFactory {
+  val httpClient = HttpClientBuilder.create().build();
 
   private class BlobImpl(val streamSource: InputStreamSource, val length: Long, val mimeType: MimeType)
     extends Blob {
@@ -86,17 +88,25 @@ object BlobFactory {
   }
 
   def fromHttpURL(url: String): Blob = {
-    val client = HttpClientBuilder.create().build();
-    val get = new HttpGet(url);
-    val resp = client.execute(get);
-    val en = resp.getEntity;
+    val get = new HttpGet(url)
+    var resp = httpClient.execute(get)
+    val en = resp.getEntity
+
     val blob = BlobFactory.fromInputStreamSource(new InputStreamSource() {
       override def offerStream[T](consume: (InputStream) => T): T = {
-        val t = consume(en.getContent)
-        client.close()
+        val t = if (resp != null) {
+          consume(en.getContent)
+        }
+        else {
+          resp = httpClient.execute(get)
+          consume(resp.getEntity.getContent)
+        }
+
+        resp.close()
+        resp = null
         t
       }
-    }, en.getContentLength, Some(MimeTypeFactory.fromText(en.getContentType.getValue)));
+    }, en.getContentLength, Some(MimeTypeFactory.fromText(en.getContentType.getValue)))
 
     blob
   }
