@@ -2,8 +2,6 @@ package org.neo4j.blob.impl
 
 import java.io._
 import java.net.URL
-import java.util.concurrent.atomic.AtomicInteger
-
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
@@ -38,7 +36,6 @@ object BlobFactory {
   private class ManagedBlobImpl(val streamSource: InputStreamSource, override val length: Long, override val mimeType: MimeType, override val id: BlobId)
     extends BlobEntryImpl(id, length, mimeType) with ManagedBlob {
   }
-
 
   def makeStoredBlob(entry: BlobEntry, streamSource: InputStreamSource): ManagedBlob =
     new ManagedBlobImpl(streamSource, entry.length, entry.mimeType, entry.id)
@@ -92,7 +89,7 @@ object BlobFactory {
     var resp = httpClient.execute(get)
     val en = resp.getEntity
 
-    val blob = BlobFactory.fromInputStreamSource(new InputStreamSource() {
+    BlobFactory.fromInputStreamSource(new InputStreamSource() {
       override def offerStream[T](consume: (InputStream) => T): T = {
         val t = if (resp != null) {
           consume(en.getContent)
@@ -107,8 +104,6 @@ object BlobFactory {
         t
       }
     }, en.getContentLength, Some(MimeTypeFactory.fromText(en.getContentType.getValue)))
-
-    blob
   }
 
   def fromURL(url: String): Blob = {

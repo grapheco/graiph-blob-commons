@@ -12,7 +12,7 @@ object BlobIO {
   val BOLT_VALUE_TYPE_BLOB_INLINE = 0xC5.toByte;
   val BOLT_VALUE_TYPE_BLOB_REMOTE = 0xC4.toByte;
   val BLOB_PROPERTY_TYPE = 15;
-  val MAX_INLINE_BLOB_BYTES = 10240;
+  val MAX_INLINE_BLOB_BYTES = 102400; //100K
 
   def pack(entry: BlobEntry): Array[Byte] = {
     val baos = new ByteArrayOutputStream();
