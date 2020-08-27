@@ -6,20 +6,6 @@ import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.neo4j.blob.{Blob, BlobEntry, BlobId, InputStreamSource, ManagedBlob, MimeType}
-import org.neo4j.blob.util.StreamUtils._
-
-object BlobIdFactory {
-  val EMPTY = BlobId(0L, 0L);
-
-  def fromBytes(bytes: Array[Byte]): BlobId = {
-    val is = new ByteArrayInputStream(bytes);
-    BlobId(is.readLong(), is.readLong());
-  }
-
-  def readFromStream(is: InputStream): BlobId = {
-    fromBytes(is.readBytes(16))
-  }
-}
 
 object BlobFactory {
   val httpClient = HttpClientBuilder.create().build();

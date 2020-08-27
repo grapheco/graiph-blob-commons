@@ -7,8 +7,8 @@ import org.neo4j.blob.util.StreamUtils
 
 trait InputStreamSource {
   /**
-    * note close input stream after consuming
-    */
+   * note close input stream after consuming
+   */
   def offerStream[T](consume: (InputStream) => T): T;
 }
 
@@ -40,8 +40,8 @@ trait Blob extends Comparable[Blob] {
   override def toString = s"blob(length=${length},mime-type=${mimeType.text})";
 }
 
-//actually a 4-long value
-case class BlobId(value1: Long, value2: Long) {
+//actually a 2-long value
+class BlobId(value1: Long, value2: Long) {
   val values = Array[Long](value1, value2);
 
   def asByteArray(): Array[Byte] = {
@@ -50,6 +50,21 @@ case class BlobId(value1: Long, value2: Long) {
 
   def asLiteralString(): String = {
     Hex.encodeHexString(asByteArray());
+  }
+}
+
+object BlobId {
+  val EMPTY = new BlobId(0, 0)
+
+  def fromBytes(bytes: Array[Byte]): BlobId = {
+    val is = new DataInputStream(new ByteArrayInputStream(bytes))
+    new BlobId(is.readLong(), is.readLong());
+  }
+
+  def readFromStream(is: InputStream): BlobId = {
+    val bytes = new Array[Byte](16)
+    new DataInputStream(is).readFully(bytes)
+    fromBytes(bytes)
   }
 }
 

@@ -1,9 +1,9 @@
 package org.neo4j.blob.util
 
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayOutputStream, DataOutputStream}
+
 import org.neo4j.blob._
 import org.neo4j.blob.impl.{BlobFactory, MimeTypeFactory}
-import org.neo4j.blob.util.StreamUtils._
 
 /**
   * Created by bluejoe on 2019/4/18.
@@ -16,7 +16,8 @@ object BlobIO {
 
   def pack(entry: BlobEntry): Array[Byte] = {
     val baos = new ByteArrayOutputStream();
-    _pack(entry, 0).foreach(baos.writeLong(_));
+    val dos = new DataOutputStream(baos)
+    _pack(entry, 0).foreach(dos.writeLong(_));
 
     baos.toByteArray;
   }
