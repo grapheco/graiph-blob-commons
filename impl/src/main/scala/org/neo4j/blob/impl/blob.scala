@@ -2,8 +2,9 @@ package org.neo4j.blob.impl
 
 import java.io._
 import java.net.URL
+
 import org.apache.commons.io.IOUtils
-import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.{HttpGet, HttpHead, HttpOptions}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.neo4j.blob.{Blob, BlobEntry, BlobId, InputStreamSource, ManagedBlob, MimeType}
 
@@ -71,25 +72,20 @@ object BlobFactory {
   }
 
   def fromHttpURL(url: String): Blob = {
-    val get = new HttpGet(url)
-    var resp = httpClient.execute(get)
-    val en = resp.getEntity
+    val head = new HttpHead(url)
+    val resp = httpClient.execute(head)
+    val (len, mime) = resp.getFirstHeader("Content-Length").getValue.toInt -> resp.getFirstHeader("Content-Type").getValue
+    resp.close()
 
     BlobFactory.fromInputStreamSource(new InputStreamSource() {
       override def offerStream[T](consume: (InputStream) => T): T = {
-        val t = if (resp != null) {
-          consume(en.getContent)
-        }
-        else {
-          resp = httpClient.execute(get)
-          consume(resp.getEntity.getContent)
-        }
-
+        val get = new HttpGet(url)
+        val resp = httpClient.execute(get)
+        val t = consume(resp.getEntity.getContent)
         resp.close()
-        resp = null
         t
       }
-    }, en.getContentLength, Some(MimeTypeFactory.fromText(en.getContentType.getValue)))
+    }, len, Some(MimeTypeFactory.fromText(mime)))
   }
 
   def fromURL(url: String): Blob = {
