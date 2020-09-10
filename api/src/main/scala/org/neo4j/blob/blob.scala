@@ -1,6 +1,7 @@
 package org.neo4j.blob
 
 import java.io._
+
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.io.IOUtils
 import org.neo4j.blob.util.StreamUtils
@@ -41,7 +42,7 @@ trait Blob extends Comparable[Blob] {
 }
 
 //actually a 2-long value
-class BlobId(value1: Long, value2: Long) {
+case class BlobId(value1: Long, value2: Long) {
   val values = Array[Long](value1, value2);
 
   def asByteArray(): Array[Byte] = {
@@ -50,6 +51,12 @@ class BlobId(value1: Long, value2: Long) {
 
   def asLiteralString(): String = {
     Hex.encodeHexString(asByteArray());
+  }
+
+  override def equals(obj: Any): Boolean = obj match {
+    case BlobId(value3, value4) =>
+      value1 == value3 && value2 == value4
+    case _ => false
   }
 }
 
