@@ -6,7 +6,8 @@ import java.net.URL
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.methods.{HttpGet, HttpHead, HttpOptions}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.neo4j.blob.{Blob, BlobEntry, BlobId, InputStreamSource, ManagedBlob, MimeType}
+import org.neo4j.blob._
+import sun.security.util.Length
 
 object BlobFactory {
   val httpClient = HttpClientBuilder.create().build();
@@ -58,27 +59,46 @@ object BlobFactory {
       mimeType.getOrElse(MimeTypeFactory.guessMimeType(iss)));
   }
 
+  def fronURLInputStreamSource(uiss: URLInputStreamSource, length: Long, mimeType: Option[MimeType] = None): Blob = {
+    new BlobImpl(uiss,
+      length,
+      mimeType.getOrElse(MimeTypeFactory.guessMimeType(uiss)));
+  }
+
   def fromFile(file: File, mimeType: Option[MimeType] = None): Blob = {
-    fromInputStreamSource(new InputStreamSource() {
-      override def offerStream[T](consume: (InputStream) => T): T = {
+    fronURLInputStreamSource(new URLInputStreamSource {
+      override val url: String = file.getCanonicalPath()
+
+      override def offerStream[T](consume: InputStream => T): T = {
         val fis = new FileInputStream(file);
         val t = consume(fis);
         fis.close();
         t;
       }
-    },
-      file.length(),
-      mimeType);
+    }, file.length(), mimeType);
+
+//    fromInputStreamSource(new InputStreamSource() {
+//      override def offerStream[T](consume: (InputStream) => T): T = {
+//        val fis = new FileInputStream(file);
+//        val t = consume(fis);
+//        fis.close();
+//        t;
+//      }
+//    },
+//      file.length(),
+//      mimeType);
   }
 
-  def fromHttpURL(url: String): Blob = {
-    val head = new HttpHead(url)
+  def fromHttpURL(httpUrl: String): Blob = {
+    val head = new HttpHead(httpUrl)
     val resp = httpClient.execute(head)
     val (len, mime) = resp.getFirstHeader("Content-Length").getValue.toInt -> resp.getFirstHeader("Content-Type").getValue
     resp.close()
 
-    BlobFactory.fromInputStreamSource(new InputStreamSource() {
-      override def offerStream[T](consume: (InputStream) => T): T = {
+    BlobFactory.fronURLInputStreamSource(new URLInputStreamSource {
+      override val url: String = httpUrl
+
+      override def offerStream[T](consume: InputStream => T): T = {
         val get = new HttpGet(url)
         val resp = httpClient.execute(get)
         val t = consume(resp.getEntity.getContent)

@@ -13,6 +13,11 @@ trait InputStreamSource {
   def offerStream[T](consume: (InputStream) => T): T;
 }
 
+trait URLInputStreamSource extends InputStreamSource {
+  val url: String;
+  def offerStream[T](consume: InputStream => T): T;
+}
+
 trait BlobEntry {
   val id: BlobId;
   val length: Long;
