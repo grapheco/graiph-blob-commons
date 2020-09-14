@@ -9,7 +9,11 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.neo4j.blob._
 import sun.security.util.Length
 
+import scala.collection.mutable
+
 object BlobFactory {
+
+  var memBlobCache: mutable.HashMap[String, Blob] = new mutable.HashMap[String, Blob]()
   val httpClient = HttpClientBuilder.create().build();
 
   private class BlobImpl(val streamSource: InputStreamSource, val length: Long, val mimeType: MimeType)
