@@ -29,6 +29,10 @@
             <name>shenzhihong</name>
             <email>bluejoe2008@gmail.com</email>
         </developer>
+        <developer>
+            <name>zhaozihao</name>
+            <email>airzihao@163.com</email>
+        </developer>
     </developers>
     <scm>
         <connection>scm:git:git@github.com:grapheco/graiph-blob-commons.git</connection>
