@@ -105,16 +105,3 @@ object BlobFactory {
     }
   }
 }
-
-class InlineBlob(bytes: Array[Byte], val length: Long, val mimeType: MimeType)
-  extends Blob {
-
-  override val streamSource: InputStreamSource = new InputStreamSource() {
-    override def offerStream[T](consume: (InputStream) => T): T = {
-      val fis = new ByteArrayInputStream(bytes)
-      val t = consume(fis)
-      fis.close()
-      t
-    }
-  }
-}
