@@ -6,6 +6,8 @@ import org.apache.commons.codec.binary.Hex
 import org.apache.commons.io.IOUtils
 import org.neo4j.blob.util.StreamUtils
 
+import org.apache.commons.codec.digest.DigestUtils
+
 trait InputStreamSource {
   /**
    * note close input stream after consuming
@@ -77,6 +79,12 @@ object BlobId {
     val bytes = new Array[Byte](16)
     new DataInputStream(is).readFully(bytes)
     fromBytes(bytes)
+  }
+}
+
+object Blob {
+  def getMd5HexDigest(blob: Blob): String = {
+    DigestUtils.md5Hex(blob.toBytes())
   }
 }
 

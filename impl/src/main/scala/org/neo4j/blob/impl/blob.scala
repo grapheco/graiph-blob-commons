@@ -15,6 +15,7 @@ object BlobFactory {
 
   var memBlobCache: mutable.HashMap[String, Blob] = new mutable.HashMap[String, Blob]()
   val httpClient = HttpClientBuilder.create().build();
+  val EMPTY: Blob = fromBytes(Array[Byte]());
 
   private class BlobImpl(val streamSource: InputStreamSource, val length: Long, val mimeType: MimeType)
     extends Blob {
@@ -55,8 +56,6 @@ object BlobFactory {
     }, bytes.length, Some(MimeTypeFactory.fromText("application/octet-stream")));
   }
 
-  val EMPTY: Blob = fromBytes(Array[Byte]());
-
   def fromInputStreamSource(iss: InputStreamSource, length: Long, mimeType: Option[MimeType] = None): Blob = {
     new BlobImpl(iss,
       length,
@@ -70,27 +69,17 @@ object BlobFactory {
   }
 
   def fromFile(file: File, mimeType: Option[MimeType] = None): Blob = {
-    fronURLInputStreamSource(new URLInputStreamSource {
-      override val url: String = file.getCanonicalPath()
-
-      override def offerStream[T](consume: InputStream => T): T = {
+    
+    fromInputStreamSource(new InputStreamSource() {
+      override def offerStream[T](consume: (InputStream) => T): T = {
         val fis = new FileInputStream(file);
         val t = consume(fis);
         fis.close();
         t;
       }
-    }, file.length(), mimeType);
-
-//    fromInputStreamSource(new InputStreamSource() {
-//      override def offerStream[T](consume: (InputStream) => T): T = {
-//        val fis = new FileInputStream(file);
-//        val t = consume(fis);
-//        fis.close();
-//        t;
-//      }
-//    },
-//      file.length(),
-//      mimeType);
+    },
+      file.length(),
+      mimeType);
   }
 
   def fromHttpURL(httpUrl: String): Blob = {
