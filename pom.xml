@@ -13,7 +13,6 @@
     <modules>
         <module>api</module>
         <module>impl</module>
-        <module>common-test</module>
     </modules>
 
     <name>blob commons libray</name>
