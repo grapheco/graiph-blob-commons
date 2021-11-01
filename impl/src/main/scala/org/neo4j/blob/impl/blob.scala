@@ -105,16 +105,31 @@ object BlobFactory {
     val p = "(?i)(http|https|file|ftp|ftps):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&:/~\\+#]*[\\w\\-\\@?^=%&/~\\+#])?".r
     val uri = p.findFirstIn(url).getOrElse(url)
 
-    val lower = uri.toLowerCase();
-    if (lower.startsWith("http://") || lower.startsWith("https://")) {
-      fromHttpURL(uri);
+    if(memBlobCache.contains(uri)){
+      val blob: Blob = memBlobCache.get(uri).get
+      blob
+    } else {
+      val lower = uri.toLowerCase();
+      val remoteBlob: Blob = if (lower.startsWith("http://") || lower.startsWith("https://")) {
+        fromHttpURL(uri);
+      }
+      else if (lower.startsWith("file://")) {
+        fromFile(new File(uri.substring(lower.indexOf("//") + 1)));
+      }
+      else {
+        //ftp, ftps?
+        fromBytes(IOUtils.toByteArray(new URL(uri)));
+      }
+
+      val bytes: Array[Byte] = remoteBlob.toBytes()
+      val tempBlob = BlobFactory.fromBytes(bytes)
+      val localBlob: Blob = BlobFactory.makeBlob(remoteBlob.length, remoteBlob.mimeType, tempBlob.streamSource)
+
+
+      memBlobCache.put(uri, localBlob)
+      localBlob
     }
-    else if (lower.startsWith("file://")) {
-      fromFile(new File(uri.substring(lower.indexOf("//") + 1)));
-    }
-    else {
-      //ftp, ftps?
-      fromBytes(IOUtils.toByteArray(new URL(uri)));
-    }
+
+
   }
 }
